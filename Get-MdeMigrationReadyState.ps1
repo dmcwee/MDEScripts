@@ -1,3 +1,10 @@
+<#
+=============================================================================
+
+=============================================================================
+
+#>
+
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [Parameter(Mandatory=$true, HelpMessage='List of machines to check for MDE readiness')][string[]]$Machines
@@ -22,8 +29,21 @@ function Get-ServerMdeInstalledStatus {
     (Get-WindowsFeature -Name Windows-Defender -ComputerName $MachineName).Installed
 }
 
+function Get-RemoteRegistryValue {
+    param(
+        [string]$MachineName,
+        [string]$RegKeyPath,
+        [string]$RegKeyName
+    )
+
+    $r = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-ItemProperty -Path $Using:RegKeyPath -Name $Using:RegKeyName -ErrorAction SilentlyContinue }
+    Write-Debug ("Machine {0} '{1}:{2} value is {3}" -f $MachineName, $RegKeyPath, $RegKeyName, $r.$RegKeyName)
+    $r.$RegKeyName
+}
+
 <#
-    This appears to be replaced by the GPO to 'Turn off Windows Defender Antivirus'
+    This aligns with the GPO Computer Configuration >> Policies >> Administrative Templates >> Windows Components >> Windows Defender Antivirus >> Real-time Protection >> Turn off real-time protection
+    and the GPO Computer Configuration >> Policies >> Administrative Templates >> Windows Components >> Windows Defender Antivirus >> Turn off Windows Defender Antivirus
 #>
 function Get-DisableAntiSpywareSetting {
     param (
@@ -31,8 +51,10 @@ function Get-DisableAntiSpywareSetting {
     )
 
     #look at HybridModeEnabled as well to determine what it means
-    $p = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-ItemProperty -Path 'HKLM:\Software\Microsoft\Windows Defender' -Name DisableAntiSpyware -ErrorAction SilentlyContinue }
-    $p.DisableAntiSpyware
+    $s = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\Software\Microsoft\Windows Defender' -RegKeyName DisableAntiSpyware
+    $p = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\Software\Policies\Microsoft\Windows Defender' -RegKeyName DisableAntiSpyware
+
+    $p -or $s
 }
 
 <#
@@ -43,8 +65,18 @@ function Get-DisableAntiVirusSetting {
         [string]$MachineName
     )
 
-    $p = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-ItemProperty -Path 'HKLM:\Software\Microsoft\Windows Defender' -Name DisableAntiVirus -ErrorAction SilentlyContinue }
-    $p.DisableAntiVirus
+    $s = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\Software\Microsoft\Windows Defender' -RegKeyName DisableAntiVirus
+    $s
+}
+
+function Get-DisableRealTimeMonitoring {
+    param (
+        [string]$MachineName
+    )
+
+    $s = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\Software\Microsoft\Windows Defender\Real-Time Protection' -RegKeyName DisableRealtimeMonitoring
+    $p = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\Software\Policies\Microsoft\Windows Defender\Real-Time Protection' -RegKeyName DisableRealtimeMonitoring
+    $s -or $p
 }
 
 function Get-ForcePassiveMode {
@@ -52,8 +84,8 @@ function Get-ForcePassiveMode {
         [string]$MachineName
     )
 
-    $p = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection' -Name ForceDefenderPassiveMode -ErrorAction SilentlyContinue }
-    $p.ForceDefenderPassiveMode
+    $p = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection' -RegKeyName ForceDefenderPassiveMode
+    $p
 }
 
 <#
@@ -64,8 +96,20 @@ function Get-DpaDisabled {
         [string]$MachineName
     )
 
-    $p = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection' -Name DpaDisabled }
-    $p.DpaDisabled
+    $s = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection' -RegKeyName DpaDisabled
+    $s
+
+    #$p = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection' -RegKeyName DpaDisabled
+    #$p -or $s
+}
+
+function Get-DisableOnAccessProtection {
+    param (
+        [string]$MachineName
+    )
+
+    $p = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection' -RegKeyName DisableOnAccessProtection
+    $p
 }
 
 function Get-Win2012R2Update {
@@ -112,7 +156,7 @@ function Get-Win2016Update {
     }
     catch {
         write-debug ("Get-Win2016Update: Error caught calling Get-HotFix to remote machine {0}. Reverting to Invoke-Command." -f $MachineName)
-        $update = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-HotFix -id KB5005698,KB5011570,KB5014026,KB5016058,KB5017095,KB5017396,KB5023788 }
+        $update = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-HotFix -id $Using:SSUKbs }
     }
     
     $update | format-list -property *
@@ -137,7 +181,14 @@ function Get-WindowsVersion {
         [string]$MachineName
     )
 
-    $caption = Get-ADComputer -Filter {(Name -eq $MachineName)} -Properties OperatingSystem,OperatingSystemVersion -ErrorAction SilentlyContinue
+    # Best way to detect systems is from a machine with PowerShell AD. In case that is not possible catch the error and move to other methods
+    try {
+        $caption = Get-ADComputer -Filter {(Name -eq $MachineName)} -Properties OperatingSystem,OperatingSystemVersion -ErrorAction SilentlyContinue
+    }
+    catch {
+        $caption = $null
+    }
+    
     if($null -eq $caption) {
         # Need to test this with the Windows 10 & 11 OS's
         $caption = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-ComputerInfo -Property WindowsProductName -ErrorAction SilentlyContinue } 
@@ -160,41 +211,134 @@ function Get-WindowsVersion {
     }
 }
 
-Class MachineDetails {
-    [string]$MachineName
-    [string]$OS
-    [bool]$NeedsPatches
-    [string]$InstallStatus
-    [bool]$AntiSpywareDisabled
-    [bool]$AntiVirusDisabled
-    [bool]$ForcePassiveMode
-    [bool]$DpaDisabled
-}
+
+$MachineTest = @'
+    {
+        "MachineName":"",
+        "OS":"",
+        "NeedsPatches":false,
+        "InstallStatus":"Installed",
+        "Keys": [
+            {
+                "Label": "Turn off Windows Defender Antivirus",
+                "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
+                "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender",
+                "Key": "DisableAntiSpyware",
+                "Value": "",
+                "Disabled": 1
+            },
+            {
+                "Label": "Turn off Windows Defender Antivirus",
+                "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
+                "Path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+                "Key": "DpaDisabled",
+                "Value": "",
+                "Disabled": 1
+            },
+            {
+                "Label": "Monitor file and program activity on your computer",
+                "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
+                "Path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+                "Key": "DisableOnAccessProtection",
+                "Value": "",
+                "Disabled": 1
+            },
+            {
+                "Label":"Disable On Access Protection",
+                "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
+                "Path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection", 
+                "Key": "DisableOnAccessProtection",
+                "Value": "",
+                "Disabled": 1
+            },
+            {
+                "Label": "Disable Real Time Monitoring",
+                "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+                "Key": "DisableRealtimeMonitoring",
+                "Value": "",
+                "Disabled": 1
+            },
+            {
+                "Label": "Force Defender in Passive Mode",
+                "Path":"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Advanced Threat Protection",
+                "Key": "ForceDefenderPassiveMode",
+                "Value": "",
+                "Disabled": 1
+            },
+            {
+                "Label": "Disable Real Time Monitoring",
+                "Path": "HKLM:\\Software\\Microsoft\\Windows Defender\\Real-Time Protection",
+                "Key": "DisableRealtimeMonitoring",
+                "Value": "",
+                "Disabled": 1
+            },
+            {
+                "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
+                "Label": "Turn off Windows Defender Antivirus",
+                "Path": "HKLM:\\SOFTWARE\\Microsoft\\Windows Defender\\Real-Time Protection",
+                "Key": "DpaDisabled",
+                "Value": "",
+                "Disabled": 1
+            },
+            {
+                "Label": "Disable Windows Defender AntiVirus",
+                "Path":"HKLM:\\Software\\Microsoft\\Windows Defender",
+                "Key":"DisableAntiVirus",
+                "Value":"",
+                "Disabled": 1
+            }
+        ]
+    }
+'@
+
 
 $results = @()
 
 #Iterate over the list of machines
 $Machines | foreach {
-    $result = New-Object MachineDetails
-    $result.MachineName = $_
+    $machine = ConvertFrom-Json -InputObject $MachineTest
+    $machine.MachineName = $_
+
+    #$result = New-Object MachineDetails
+    #$result.MachineName = $_
     $MachineName = $_
 
     #get the OS
     $version = Get-WindowsVersion $MachineName
     write-debug ("Machine {0} version string {1}" -f $MachineName, $version)
-    $result.OS = $version
+    #$result.OS = $version
+    $machine.OS = $version
 
-    $antiSpyware = Get-DisableAntiSpywareSetting -MachineName $MachineName
-    write-debug ("Machine {0} antispyware disabled is {1}" -f $MachineName, $antiSpyware)
-    $result.AntiSpywareDisabled = $antiSpyware
+    $machine.Keys | foreach {
+        $path = $_.Path
+        $key = $_.Key
+        $value = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath $path -RegKeyName $key
+        if($null -eq $value) { $value = 0 }
+        if($value -eq $_.Disabled) {
+            $_.Value = "Yes"
+        }
+        else {
+            $_.Value = "No"
+        }
 
-    $antiVirus = Get-DisableAntiVirusSetting -MachineName $MachineName
-    write-debug ("Machine {0} antivirus disabled is {1}" -f $MachineName, $antiVirus)
-    $result.AntiVirusDisabled = $antiVirus
+        Write-Host ("Test Machine {0} path '{1}:{2}' value {3}" -f $MachineName, $path, $key, $value)
+    }
 
-    $dpa = Get-DpaDisabled -MachineName $MachineName
-    write-debug ("Machine {0} DpaDisabled is {1}" -f $MachineName, $dpa)
-    $result.DpaDisabled = $dpa
+    #$antiSpyware = Get-DisableAntiSpywareSetting -MachineName $MachineName
+    #write-debug ("Machine {0} antispyware disabled is {1}" -f $MachineName, $antiSpyware)
+    #$result.AntiSpywareDisabled = $antiSpyware
+
+    #$antiVirus = Get-DisableAntiVirusSetting -MachineName $MachineName
+    #write-debug ("Machine {0} antivirus disabled is {1}" -f $MachineName, $antiVirus)
+    #$result.AntiVirusDisabled = $antiVirus
+
+    #$dpa = Get-DpaDisabled -MachineName $MachineName
+    #write-debug ("Machine {0} DpaDisabled is {1}" -f $MachineName, $dpa)
+    #$result.DpaDisabled = $dpa
+
+    #$rtmDisabled = Get-DisableRealTimeMonitoring $MachineName
+    #Write-Debug ("Machine {0} Real Time Monitoring Disabled is {1}" -f $MachineName, $rtmDisabled)
+    #$result.RealTimeMonitoringDisabled = $rtmDisabled
 
     if($version -like "*Server*") {
         write-debug ("Machine {0} is a server. Performing Server MDE Checks" -f $MachineName)
@@ -202,29 +346,33 @@ $Machines | foreach {
         $installStatus = Get-ServerMdeInstalledStatus -MachineName $MachineName
         write-debug ("Machine {0} Defender Feature is {1}" -f $MachineName, $installStatus)
         if($installStatus -eq $true) {
-            $result.InstallStatus = "Installed"
+            # $result.InstallStatus = "Installed"
+            $machine.InstallStatus = "Installed"
         }
         else {
-            $result.InstallStatus = "Not Installed"
+            # $result.InstallStatus = "Not Installed"
+            $machine.InstallStatus = "Not Installed"
         }
         
-        $passiveMode = Get-ForcePassiveMode -MachineName $MachineName
-        write-debug ("Machine {0} force passive mode is {1}" -f $MachineName, $passiveMode)
-        $result.ForcePassiveMode = $passiveMode
+        #$passiveMode = Get-ForcePassiveMode -MachineName $MachineName
+        #write-debug ("Machine {0} force passive mode is {1}" -f $MachineName, $passiveMode)
+        #$result.ForcePassiveMode = $passiveMode
 
         if($version -like "*Server 2012 R2*") {
-            $result.InstallStatus = "N/A"
+            $machine.InstallStatus = "N/A"
             #run 2012 checks
             $updates = Get-Win2012R2Update -MachineName $MachineName
             if($null -eq $updates) {
-                $result.NeedsPatches = $true
+                #$result.NeedsPatches = $true
+                $machine.NeedsPatches = $true
             }
         }
         elseif($version -like "*Server 2016*") {
             #run 2016 checks
             $updates = Get-Win2016Update -MachineName $MachineName
             if($null -eq $updates) {
-                $result.NeedsPatches = $true
+                # $result.NeedsPatches = $true
+                $machine.NeedsPatches = $true
             }
         }
         #elseif($version -like "*Server 2019*") {
@@ -232,7 +380,8 @@ $Machines | foreach {
         #}
     }
 
-    $results += $result
+    #$results += $result
+    $results += $machine
 }
 
-$results | Format-List -Property *
+$results | Format-List -Property * -Expand Both

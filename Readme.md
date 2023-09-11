@@ -8,7 +8,7 @@ This script is intended to scan the list of machines provided to check for some 
 
 1. Verify Defender Features are Installed (Windows Server 2016+)
 1. Verify KBs are Installed (Windows Server 2012 R2+)
-1. Check for various GPO settings that inhibit various Defender features from acting normally
+1. Check for GPO settings that inhibit various Defender features from acting normally
 
 ### Requirements
 

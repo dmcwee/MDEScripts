@@ -147,6 +147,10 @@ function Write-Screen {
     }
 }
 
+If ($PSBoundParameters[‘Debug’]) {
+    $DebugPreference='Continue'
+}
+
 $results = @()
 #$Kbs = (Get-Content "HotFixChecks.json" -Raw) | ConvertFrom-Json
 $Tests = (Get-Content "Tests.json" -Raw) | ConvertFrom-Json

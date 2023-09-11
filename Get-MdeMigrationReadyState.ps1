@@ -7,7 +7,13 @@
 
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [Parameter(Mandatory=$true, HelpMessage='List of machines to check for MDE readiness')][string[]]$Machines
+    [Parameter(Mandatory=$true, HelpMessage='List of machines to check for MDE readiness')]
+    [string[]]$Machines,
+    [Parameter(Mandatory=$true, HelpMessage='Acceptable output values: HTML, JSON, Screen')]
+    [ValidateSet("HTML","JSON","Screen")]
+    [string]$Output,
+    [Parameter()]
+    [string]$OutputFileName = "MDEReadinessResults"
 )
 
 <#
@@ -41,125 +47,20 @@ function Get-RemoteRegistryValue {
     $r.$RegKeyName
 }
 
-<#
-    This aligns with the GPO Computer Configuration >> Policies >> Administrative Templates >> Windows Components >> Windows Defender Antivirus >> Real-time Protection >> Turn off real-time protection
-    and the GPO Computer Configuration >> Policies >> Administrative Templates >> Windows Components >> Windows Defender Antivirus >> Turn off Windows Defender Antivirus
-#>
-function Get-DisableAntiSpywareSetting {
-    param (
-        [string]$MachineName
+function Get-RemoteHotFix {
+    param(
+        [string]$MachineName,
+        [string[]]$Kbs
     )
 
-    #look at HybridModeEnabled as well to determine what it means
-    $s = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\Software\Microsoft\Windows Defender' -RegKeyName DisableAntiSpyware
-    $p = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\Software\Policies\Microsoft\Windows Defender' -RegKeyName DisableAntiSpyware
-
-    $p -or $s
-}
-
-<#
-    This appears to be replaced by the GPO to 'Turn off Windows Defender Antivirus'
-#>
-function Get-DisableAntiVirusSetting {
-    param (
-        [string]$MachineName
-    )
-
-    $s = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\Software\Microsoft\Windows Defender' -RegKeyName DisableAntiVirus
-    $s
-}
-
-function Get-DisableRealTimeMonitoring {
-    param (
-        [string]$MachineName
-    )
-
-    $s = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\Software\Microsoft\Windows Defender\Real-Time Protection' -RegKeyName DisableRealtimeMonitoring
-    $p = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\Software\Policies\Microsoft\Windows Defender\Real-Time Protection' -RegKeyName DisableRealtimeMonitoring
-    $s -or $p
-}
-
-function Get-ForcePassiveMode {
-    param (
-        [string]$MachineName
-    )
-
-    $p = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection' -RegKeyName ForceDefenderPassiveMode
-    $p
-}
-
-<#
-    This aligns with the GPO Computer Configuration >> Policies >> Administrative Templates >> Windows Components >> Windows Defender Antivirus >> Turn off Windows Defender Antivirus
-#>
-function Get-DpaDisabled {
-    param (
-        [string]$MachineName
-    )
-
-    $s = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection' -RegKeyName DpaDisabled
-    $s
-
-    #$p = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection' -RegKeyName DpaDisabled
-    #$p -or $s
-}
-
-function Get-DisableOnAccessProtection {
-    param (
-        [string]$MachineName
-    )
-
-    $p = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection' -RegKeyName DisableOnAccessProtection
-    $p
-}
-
-function Get-Win2012R2Update {
-    param (
-        [string]$MachineName
-    )
-
+    Write-Debug ("KB Count {0}" -f $Kbs.Count)
     try {
-        $update = Get-HotFix -id "KB3045999" -ComputerName $MachineName
+        $update = Get-HotFix -id $Kbs -ComputerName $MachineName
     }
     catch {
-        write-debug ("Get-Win2012R2Update: Error caught calling Get-HotFix to remote machine {0}. Reverting to Invoke-Command." -f $MachineName)
-        $update = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-HotFix -id "KB3045999" }
+        write-debug ("Get-RemoteHotFix: Error caught calling Get-HotFix to remote machine {0}. Reverting to Invoke-Command." -f $MachineName)
+        $update = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-HotFix -id $Using:Kbs }
     }
-    
-    $update | format-list -property *
-    $update
-}
-
-<#
-    Refer to https://msrc.microsoft.com/update-guide/vulnerability/ADV990001 for Servicing Stack Updates
-    Then navigate to the MS Catalog for the latest list of SSUs and check if there are additional items that 
-    supercede these KBs.
-#>
-function Get-Win2016Update {
-    param (
-        [string]$MachineName
-    )
-
-    # As of 1 Sept 2023 these are the correct KBs
-    $SSUKbs = @'
-    Date, Description, HotFixID
-    2021-09, Servicing Stack Update for Windows Server 2016 for x64-based Systems, KB5005698
-    2022-03, Servicing Stack Update for Windows Server 2016 for x64-based Systems, KB5011570
-    2022-05, Servicing Stack Update for Windows Server 2016 for x64-based Systems, KB5014026
-    2022-07, Servicing Stack Update for Windows Server 2016 for x64-based Systems, KB5016058
-    2022-08, Servicing Stack Update for Windows Server 2016 for x64-based Systems, KB5017095
-    2022-09, Servicing Stack Update for Windows Server 2016 for x64-based Systems, KB5017396
-    2023-03, Servicing Stack Update for Windows Server 2016 for x64-based Systems, KB5023788
-'@ | ConvertFrom-Csv | Select-object -ExpandProperty HotFixID
-
-    try {
-        $update = Get-HotFix -id $SSUKbs -ComputerName $MachineName
-    }
-    catch {
-        write-debug ("Get-Win2016Update: Error caught calling Get-HotFix to remote machine {0}. Reverting to Invoke-Command." -f $MachineName)
-        $update = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-HotFix -id $Using:SSUKbs }
-    }
-    
-    $update | format-list -property *
     $update
 }
 
@@ -211,177 +112,149 @@ function Get-WindowsVersion {
     }
 }
 
+function Write-Html {
+    param(
+        $Results,
+        $OutputFileName
+    )
 
-$MachineTest = @'
-    {
-        "MachineName":"",
-        "OS":"",
-        "NeedsPatches":false,
-        "InstallStatus":"Installed",
-        "Keys": [
-            {
-                "Label": "Turn off Windows Defender Antivirus",
-                "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
-                "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender",
-                "Key": "DisableAntiSpyware",
-                "Value": "",
-                "Disabled": 1
-            },
-            {
-                "Label": "Turn off Windows Defender Antivirus",
-                "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
-                "Path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
-                "Key": "DpaDisabled",
-                "Value": "",
-                "Disabled": 1
-            },
-            {
-                "Label": "Monitor file and program activity on your computer",
-                "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
-                "Path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
-                "Key": "DisableOnAccessProtection",
-                "Value": "",
-                "Disabled": 1
-            },
-            {
-                "Label":"Disable On Access Protection",
-                "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
-                "Path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection", 
-                "Key": "DisableOnAccessProtection",
-                "Value": "",
-                "Disabled": 1
-            },
-            {
-                "Label": "Disable Real Time Monitoring",
-                "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
-                "Key": "DisableRealtimeMonitoring",
-                "Value": "",
-                "Disabled": 1
-            },
-            {
-                "Label": "Force Defender in Passive Mode",
-                "Path":"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Advanced Threat Protection",
-                "Key": "ForceDefenderPassiveMode",
-                "Value": "",
-                "Disabled": 1
-            },
-            {
-                "Label": "Disable Real Time Monitoring",
-                "Path": "HKLM:\\Software\\Microsoft\\Windows Defender\\Real-Time Protection",
-                "Key": "DisableRealtimeMonitoring",
-                "Value": "",
-                "Disabled": 1
-            },
-            {
-                "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
-                "Label": "Turn off Windows Defender Antivirus",
-                "Path": "HKLM:\\SOFTWARE\\Microsoft\\Windows Defender\\Real-Time Protection",
-                "Key": "DpaDisabled",
-                "Value": "",
-                "Disabled": 1
-            },
-            {
-                "Label": "Disable Windows Defender AntiVirus",
-                "Path":"HKLM:\\Software\\Microsoft\\Windows Defender",
-                "Key":"DisableAntiVirus",
-                "Value":"",
-                "Disabled": 1
-            }
-        ]
+    $file = $OutputFileName + ".html"
+    $Results | ConvertTo-Html | Out-File -FilePath $file
+}
+
+function Write-Json {
+    param(
+        $Results,
+        $OutputFileName
+    )
+
+    $file = $OutputFileName + ".json"
+    $Results | ConvertTo-Json | Out-File -FilePath $file
+}
+
+function Write-Screen {
+    param(
+        $Results
+    )
+
+    $Results | foreach {
+        Write-Host ("Machine Name, OS, Needs Patches, Install Status")
+        Write-Host ("{0}, {1}, {2}, {3}" -f $_.MachineName, $_.OS, $_.NeedsPatches, $_.InstallStatus)
+        $_.GPOs | foreach {
+            Write-Host ("     {0}({1}):{2}" -f $_.Label, $_.Key, $_.Value)
+        }
+        Write-Host "   "
     }
-'@
-
+}
 
 $results = @()
+#$Kbs = (Get-Content "HotFixChecks.json" -Raw) | ConvertFrom-Json
+$Tests = (Get-Content "Tests.json" -Raw) | ConvertFrom-Json
+
+$machineTemplate = Get-Content "MachineResult.json" -Raw
+
+$machineCount = 0
+$machinePercent = 100 / $Machines.Count
+$percentage = 0
 
 #Iterate over the list of machines
 $Machines | foreach {
-    $machine = ConvertFrom-Json -InputObject $MachineTest
-    $machine.MachineName = $_
-
-    #$result = New-Object MachineDetails
-    #$result.MachineName = $_
+    $step = 0
     $MachineName = $_
+
+    $percentage = ($machinePercent * $machineCount) + ($machinePercent * $step)
+    Write-Progress -Activity "Reviewing Machine $MachineName" -Status "Getting Machine Details" -PercentComplete $percentage
+    
+    $machine = $machineTemplate | ConvertFrom-Json
+    $machine.MachineName = $_
 
     #get the OS
     $version = Get-WindowsVersion $MachineName
     write-debug ("Machine {0} version string {1}" -f $MachineName, $version)
-    #$result.OS = $version
     $machine.OS = $version
 
-    $machine.Keys | foreach {
+    $step = .33
+    $percentage = ($machinePercent * $machineCount) + ($machinePercent * $step)
+    Write-Progress -Activity "Reviewing Machine $MachineName" -Status "Checking GPOs that disable Defender" -PercentComplete $percentage
+
+    $Tests.GPOs | foreach {
         $path = $_.Path
         $key = $_.Key
         $value = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath $path -RegKeyName $key
-        if($null -eq $value) { $value = 0 }
-        if($value -eq $_.Disabled) {
-            $_.Value = "Yes"
+
+        if($null -eq $value) { 
+            $value = "Not configured"
+        }
+        elseif($value -eq $_.Disabled) {
+            $value = "Disabled"
         }
         else {
-            $_.Value = "No"
+            $value = "Enabled"
         }
 
-        Write-Host ("Test Machine {0} path '{1}:{2}' value {3}" -f $MachineName, $path, $key, $value)
+        Write-Debug ("Test Machine {0} path '{1}:{2}' value {3}" -f $MachineName, $path, $key, $value)
+        $gpo = $_
+        $gpo.Value = $value
+        $machine.GPOs += $gpo
     }
 
-    #$antiSpyware = Get-DisableAntiSpywareSetting -MachineName $MachineName
-    #write-debug ("Machine {0} antispyware disabled is {1}" -f $MachineName, $antiSpyware)
-    #$result.AntiSpywareDisabled = $antiSpyware
-
-    #$antiVirus = Get-DisableAntiVirusSetting -MachineName $MachineName
-    #write-debug ("Machine {0} antivirus disabled is {1}" -f $MachineName, $antiVirus)
-    #$result.AntiVirusDisabled = $antiVirus
-
-    #$dpa = Get-DpaDisabled -MachineName $MachineName
-    #write-debug ("Machine {0} DpaDisabled is {1}" -f $MachineName, $dpa)
-    #$result.DpaDisabled = $dpa
-
-    #$rtmDisabled = Get-DisableRealTimeMonitoring $MachineName
-    #Write-Debug ("Machine {0} Real Time Monitoring Disabled is {1}" -f $MachineName, $rtmDisabled)
-    #$result.RealTimeMonitoringDisabled = $rtmDisabled
-
+    $step = .66
+    $percentage = ($machinePercent * $machineCount) + ($machinePercent * $step)
+    Write-Progress -Activity "Reviewing Machine $MachineName" -Status "Checking for missing updates (KBs)" -PercentComplete $percentage
     if($version -like "*Server*") {
         write-debug ("Machine {0} is a server. Performing Server MDE Checks" -f $MachineName)
 
         $installStatus = Get-ServerMdeInstalledStatus -MachineName $MachineName
         write-debug ("Machine {0} Defender Feature is {1}" -f $MachineName, $installStatus)
         if($installStatus -eq $true) {
-            # $result.InstallStatus = "Installed"
             $machine.InstallStatus = "Installed"
         }
         else {
-            # $result.InstallStatus = "Not Installed"
             $machine.InstallStatus = "Not Installed"
         }
         
-        #$passiveMode = Get-ForcePassiveMode -MachineName $MachineName
-        #write-debug ("Machine {0} force passive mode is {1}" -f $MachineName, $passiveMode)
-        #$result.ForcePassiveMode = $passiveMode
-
         if($version -like "*Server 2012 R2*") {
             $machine.InstallStatus = "N/A"
-            #run 2012 checks
-            $updates = Get-Win2012R2Update -MachineName $MachineName
-            if($null -eq $updates) {
-                #$result.NeedsPatches = $true
-                $machine.NeedsPatches = $true
-            }
+
+            #Get 2012 HotFixIds
+            $HotFixIds = $Tests.Kbs | Where-Object -Property OS -eq "Win2012R2" | Select-Object -ExpandProperty HotFixId
         }
         elseif($version -like "*Server 2016*") {
-            #run 2016 checks
-            $updates = Get-Win2016Update -MachineName $MachineName
+            #Get 2016 HotFixIds
+            $HotFixIds = $Tests.Kbs | Where-Object -Property OS -eq "Win2016" | Select-Object -ExpandProperty HotFixId
+        }
+        elseif($version -like "*Server 2019*") {
+            #Get 2019 HotFixIds - None used in 09/2023 but this may change in the future
+            $HotFixIds = $Tests.Kbs | Where-Object -Property OS -eq "Win2019" | Select-Object -ExpandProperty HotFixId
+        }
+
+        Write-Debug ("Machine {0} HotFix Count: {1}" -f $MachineName, $HotFixIds.Count)
+        if($HotFixIds.Count -gt 0) {
+            $updates = Get-RemoteHotFix -MachineName $MachineName -Kbs $HotFixIds
             if($null -eq $updates) {
-                # $result.NeedsPatches = $true
                 $machine.NeedsPatches = $true
             }
+            else {
+                $machine.NeedsPatches = $false
+            }
         }
-        #elseif($version -like "*Server 2019*") {
-        #    #run 2019 Checks
-        #}
+        else {
+            $machine.NeedsPatches = $false
+        }
+        
     }
 
-    #$results += $result
     $results += $machine
+    $machineCount += 1
 }
 
-$results | Format-List -Property * -Expand Both
+if($Output -eq "JSON") {
+    Write-Json -Results $results -OutputFileName $OutputFileName
+}
+elseif($Output -eq "HTML") {
+    Write-Html -Results $results -OutputFileName $OutputFileName
+}
+elseif($Output -eq "Screen") {
+    Write-Screen -Results $results
+}
+

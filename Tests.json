@@ -1,0 +1,152 @@
+{
+    "Kbs": 
+    [
+        {
+            "Date": "2015-04",
+            "Description": "Security Update for Windows Server 2012 R2",
+            "HotFixId": "KB3045999",
+            "OS": "Win2012R2"
+        },
+        {
+            "Date":"2021-09", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId": "KB5005698",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2022-03", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5011570",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2022-05", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5014026",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2022-07", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5016058",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2022-08", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5017095",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2022-09", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5017396",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2023-03", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5023788",
+            "OS": "Win2016"
+        }
+    ],
+    "GPOs":
+    [
+        {
+            "Label": "Turn off Windows Defender Antivirus",
+            "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
+            "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender",
+            "Key": "DisableAntiSpyware",
+            "Value": "",
+            "Disabled": 1
+        },
+        {
+            "Label": "Turn off Windows Defender Antivirus",
+            "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
+            "Path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+            "Key": "DpaDisabled",
+            "Value": "",
+            "Disabled": 1
+        },
+        {
+            "Label": "Turn off real-time protection",
+            "GPO":"Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
+            "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+            "Key": "DisableRealtimeMonitoring",
+            "Value": "",
+            "Disabled": 1
+        },
+        {
+            "Label": "Turn on behavior monitoring",
+            "GPO":"Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
+            "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+            "Key": "DisableBehaviorMonitoring",
+            "Value": "",
+            "Disabled": 1
+        },
+        {
+            "Label": "Scan all downloaded files and attachments",
+            "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
+            "Path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+            "Key": "DisableIOAVProtection",
+            "Value": "",
+            "Note": "Using Disable Value of 0 because the GPO says '... Monitor ...' but the registry key control is really 'disable'",
+            "Disabled": 1
+        },
+        {
+            "Label": "Monitor file and program activity on your computer",
+            "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
+            "Path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+            "Key": "DisableOnAccessProtection",
+            "Value": "",
+            "Note": "Using Disable Value of 0 because the GPO says '... Monitor ...' but the registry key control is really 'disable'",
+            "Disabled": 1
+        },
+        {
+            "Label": "Turn on process scanning whenever real-time protection is enabled",
+            "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
+            "Path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+            "Key": "DisableScanOnRealtimeEnabled",
+            "Value": "",
+            "Note": "Using Disable Value of 0 because the GPO says '... Monitor ...' but the registry key control is really 'disable'",
+            "Disabled": 1
+        },
+        {
+            "Label": "Force Defender in Passive Mode",
+            "GPO":"Computer Configuration/Preferences/Windows Settings/Registry",
+            "Path":"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Advanced Threat Protection",
+            "Key": "ForceDefenderPassiveMode",
+            "Value": "",
+            "Disabled": 1
+        }
+    ],
+    "not_in_use": 
+    [
+        {
+            "Note":"Not sure what do do with this block of tests or if it even provides values for the review. Maybe this will be helpful for clients os?"
+        },
+        {
+            "Label": "Windows Defender Antivirus Disabled",
+            "GPO": "Registry Key for application set.",
+            "Path": "HKLM:\\Software\\Microsoft\\Windows Defender",
+            "Key": "DisableAntiSpyware",
+            "Value": "",
+            "Disabled": 1
+        },
+        {
+            "Label": "Real Time Monitoring Disabled",
+            "Path": "HKLM:\\Software\\Microsoft\\Windows Defender\\Real-Time Protection",
+            "Key": "DisableRealtimeMonitoring",
+            "Value": "",
+            "Disabled": 1
+        },
+        {
+            "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
+            "Label": "Turn off Windows Defender Antivirus",
+            "Path": "HKLM:\\SOFTWARE\\Microsoft\\Windows Defender\\Real-Time Protection",
+            "Key": "DpaDisabled",
+            "Value": "",
+            "Disabled": 1
+        }
+    ]
+}

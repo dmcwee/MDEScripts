@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>MDE Migration Ready State Results</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css">
+    </head>
+    <body>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.8/handlebars.min.js" integrity="sha512-E1dSFxg+wsfJ4HKjutk/WaCzK7S2wv1POn1RRPGh8ZK+ag9l244Vqxji3r6wgz9YBf6+vhQEYJZpSjqWFPg9gg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+        <div class="container">
+            <div class="row">
+                <h1>MDE Migration Readiness Report</h1>
+            </div>
+            <div id="result" class="row">
+                Results will go here!
+            </div>
+        </div>
+        
+
+        <script id="result-template" type="text/x-handlebars-template">
+            {{#each machines}}
+            <div class="row pb-5">
+                <div class="row bg-primary-subtle border border-primary-subtle rounded-3">
+                    <div class="col col label">Machine:</div>
+                    <div class="col col-9">{{MachineName}}</div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="row">
+                            <div class="col"><strong>OS</strong></div>
+                        </div>
+                        <div class="row">
+                            <div class="col">{{OS}}</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="row">
+                            <div class="col"><strong>Needs Patches</strong></div>
+                        </div>
+                        <div class="row">
+                            <div class="col">{{NeedsPatches}}</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="row">
+                            <div class="col"><strong>Install Status</strong></div>
+                        </div>
+                        <div class="row">
+                            <div class="col">{{InstallStatus}}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row border rounded-3">
+                    <div class="col">
+                        <div class="row border-bottom">
+                            <div class="col"><strong>GPO Setting</strong></div>
+                            <div class="col"><strong>Registry Key</strong></div>
+                            <div class="col"><strong>GPO Value</strong></div>
+                            <div class="col d-none">&nbsp;</div>
+                        </div>
+                        <div clas="row">
+                            <div class="col pt-1">
+                                {{#each GPOs}}
+                                {{#if Disabled}}
+                                <div class="row pb-1">
+                                    <div class="col">{{Label}}</div>
+                                    <div class="col">{{Key}}</div>
+                                    <div class="col">{{Value}}</div>
+                                    <div class="col d-none">
+                                        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#{{../MachineName}}_details_{{@index}}" aria-expanded="false" aria-controls="{{../MachineName}}_details_{{@index}}">
+                                            More
+                                        </button>
+                                    </div>
+                                    <div class="collapse" id="{{../MachineName}}_details_{{@index}}">
+                                        <div class="card card-body">
+                                            Some content goes here about why this is bad.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {{/if}}
+                                {{/each}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+        </script>
+
+        <script>
+            result = {
+                machines: [
+                {
+                    "MachineName":"win2012r2",
+                    "OS":"Windows 2012 R2",
+                    "NeedsPatches":false,
+                    "InstallStatus":"Installed",
+                    "GPOs": [
+                        {
+                            "Label": "Turn off Windows Defender Antivirus",
+                            "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
+                            "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender",
+                            "Key": "DisableAntiSpyware",
+                            "Value": "Disabled",
+                            "Disabled": 1
+                        },
+                        {
+                            "Label": "Turn off Windows Defender Antivirus",
+                            "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
+                            "Path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+                            "Key": "DpaDisabled",
+                            "Value": "Disabled",
+                            "Disabled": 1
+                        },
+                        {
+                            "Label": "Turn off real-time protection",
+                            "GPO":"Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
+                            "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+                            "Key": "DisableRealtimeMonitoring",
+                            "Value":"Disabled",
+                            "Disabled": 1
+                        },
+                        {
+                            "Label": "Turn on behavior monitoring",
+                            "GPO":"Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
+                            "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
+                            "Key": "DisableBehaviorMonitoring",
+                            "Value": "Disabled",
+                            "Disabled": 1
+                        }
+                    ]
+                },
+                {
+                    "MachineName":"win2016",
+                    "OS":"Windows 2016",
+                    "NeedsPatches":false,
+                    "InstallStatus":"Installed",
+                    "GPOs": [
+                        {
+                            "Label": "Turn off Windows Defender Antivirus",
+                            "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
+                            "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender",
+                            "Key": "DisableAntiSpyware",
+                            "Value": "Disabled",
+                            "Disabled": 1
+                        }
+                    ]
+                }]
+            };
+            
+
+            var source = document.getElementById("result-template").innerHTML;
+            var template = Handlebars.compile(source);
+            var html = template(result);
+            console.log(html);
+
+            document.getElementById("result").innerHTML = html;
+        </script>
+    </body>
+</html>

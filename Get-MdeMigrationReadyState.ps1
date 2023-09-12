@@ -112,6 +112,28 @@ function Get-WindowsVersion {
     }
 }
 
+function Get-Tests {
+    $testsText = Get-Content "Tests.json" -Raw -ErrorAction SilentlyContinue
+    if($null -eq $testsText) {
+        Write-Debug "Tests.json doesn't exist. Attempting to retrieve from Github."
+        $testsText = (curl "https://raw.githubusercontent.com/dmcwee/MDEScripts/master/Tests.json").Content
+    }
+
+    Write-Debug "TestsText = $testsText"
+    $tests = $testsText | ConvertFrom-Json
+    $tests
+}
+
+function Get-MachineTemplate {
+    $machineTemplate = Get-Content "MachineResult.json" -Raw -ErrorAction SilentlyContinue
+    if($null -eq $machineTemplate) {
+        Write-Debug "MachineResult.json doesn't exist. Attempting to retrieve from Github."
+        $machineTemplate = (curl "https://raw.githubusercontent.com/dmcwee/MDEScripts/master/MachineResult.json").Content
+    }
+
+    $machineTemplate
+}
+
 function Write-Html {
     param(
         $Results,
@@ -141,21 +163,24 @@ function Write-Screen {
         Write-Host ("Machine Name, OS, Needs Patches, Install Status")
         Write-Host ("{0}, {1}, {2}, {3}" -f $_.MachineName, $_.OS, $_.NeedsPatches, $_.InstallStatus)
         $_.GPOs | foreach {
-            Write-Host ("     {0}({1}):{2}" -f $_.Label, $_.Key, $_.Value)
+            if($_.Value -eq -1) { $value = "Not Configured" }
+            elseif($_.Value -eq $_.Disabled) { $value = "Disabled" }
+            else { $value = "Enabled" }
+
+            Write-Host ("     {0}({1}):{2}" -f $_.Label, $_.Key, $value)
         }
         Write-Host "   "
     }
 }
 
-If ($PSBoundParameters[‘Debug’]) {
+If ($PSBoundParameters['Debug']) {
     $DebugPreference='Continue'
 }
 
 $results = @()
-#$Kbs = (Get-Content "HotFixChecks.json" -Raw) | ConvertFrom-Json
-$Tests = (Get-Content "Tests.json" -Raw) | ConvertFrom-Json
+$Tests = Get-Tests
 
-$machineTemplate = Get-Content "MachineResult.json" -Raw
+$machineTemplate = Get-MachineTemplate
 
 $machineCount = 0
 $machinePercent = 100 / $Machines.Count
@@ -187,13 +212,13 @@ $Machines | foreach {
         $value = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath $path -RegKeyName $key
 
         if($null -eq $value) { 
-            $value = "Not configured"
+            $value = -1
         }
         elseif($value -eq $_.Disabled) {
-            $value = "Disabled"
+            $value = $_.Disabled
         }
         else {
-            $value = "Enabled"
+            $value = !($_.Disabled)
         }
 
         Write-Debug ("Test Machine {0} path '{1}:{2}' value {3}" -f $MachineName, $path, $key, $value)

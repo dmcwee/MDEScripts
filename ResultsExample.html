@@ -64,11 +64,10 @@
                         <div clas="row">
                             <div class="col pt-1">
                                 {{#each GPOs}}
-                                {{#if Disabled}}
                                 <div class="row pb-1">
                                     <div class="col">{{Label}}</div>
                                     <div class="col">{{Key}}</div>
-                                    <div class="col">{{Value}}</div>
+                                    <div class="col">{{ResultValue Value Disabled}}</div>
                                     <div class="col d-none">
                                         <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#{{../MachineName}}_details_{{@index}}" aria-expanded="false" aria-controls="{{../MachineName}}_details_{{@index}}">
                                             More
@@ -80,8 +79,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                
-                                {{/if}}
                                 {{/each}}
                             </div>
                         </div>
@@ -105,7 +102,7 @@
                             "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
                             "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender",
                             "Key": "DisableAntiSpyware",
-                            "Value": "Disabled",
+                            "Value": 1,
                             "Disabled": 1
                         },
                         {
@@ -113,7 +110,7 @@
                             "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
                             "Path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
                             "Key": "DpaDisabled",
-                            "Value": "Disabled",
+                            "Value": 1,
                             "Disabled": 1
                         },
                         {
@@ -121,7 +118,7 @@
                             "GPO":"Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
                             "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
                             "Key": "DisableRealtimeMonitoring",
-                            "Value":"Disabled",
+                            "Value": 0,
                             "Disabled": 1
                         },
                         {
@@ -129,7 +126,7 @@
                             "GPO":"Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus/Real-time Protection",
                             "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection",
                             "Key": "DisableBehaviorMonitoring",
-                            "Value": "Disabled",
+                            "Value": -1,
                             "Disabled": 1
                         }
                     ]
@@ -145,13 +142,24 @@
                             "GPO": "Computer Configuration/Policies/Administrative Templates/Windows Components/Windows Defender Antivirus",
                             "Path": "HKLM:\\Software\\Policies\\Microsoft\\Windows Defender",
                             "Key": "DisableAntiSpyware",
-                            "Value": "Disabled",
+                            "Value": 0,
                             "Disabled": 1
                         }
                     ]
                 }]
             };
             
+            Handlebars.registerHelper("ResultValue", function(value, disableValue){
+                if(value == 0) {
+                    return "Enabled";
+                }
+                else if(value == 1) {
+                    return "Disabled";
+                }
+                else {
+                    return "Not Configured";
+                }
+            });
 
             var source = document.getElementById("result-template").innerHTML;
             var template = Handlebars.compile(source);

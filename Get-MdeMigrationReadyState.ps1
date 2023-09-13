@@ -140,8 +140,16 @@ function Write-Html {
         $OutputFileName
     )
 
+    $htmlTemplate = Get-Content "ResultsOutputTemplate.html" -Raw -ErrorAction SilentlyContinue
+    if($null -eq $htmlTemplate){
+        Write-Debug "ResultsOutputTemplate.html doesn't exist. Attempting to retrieve from Github"
+        $htmlTemplate = (curl "https://raw.githubusercontent.com/dmcwee/MDEScripts/master/ResultsOutputTemplate.html").Content
+    }
+
+    $output = $htmlTemplate.Replace("{0}", (ConvertTo-Json $Results -Depth 4))
+
     $file = $OutputFileName + ".html"
-    $Results | ConvertTo-Html | Out-File -FilePath $file
+    $output | Out-File -FilePath $file
 }
 
 function Write-Json {
@@ -151,7 +159,7 @@ function Write-Json {
     )
 
     $file = $OutputFileName + ".json"
-    $Results | ConvertTo-Json | Out-File -FilePath $file
+    $Results | ConvertTo-Json -Depth 4 | Out-File -FilePath $file
 }
 
 function Write-Screen {

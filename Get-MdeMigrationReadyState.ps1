@@ -24,7 +24,9 @@ function Get-ClientMdeInstalledStatus {
         [string]$MachineName
     )
 
-    Get-WindowsOptionalFeature -Online | Where -Property FeatureName -like "*efender*"
+    $feature = Get-WindowsOptionalFeature -Online | Where -Property FeatureName -like "*efender*"
+    Write-Debug ("Machine {0} feature: {1}" -f $MachineName, $feature)
+    $feature
 }
 
 function Get-ServerMdeInstalledStatus {
@@ -32,7 +34,9 @@ function Get-ServerMdeInstalledStatus {
         [string]$MachineName
     )
 
-    (Get-WindowsFeature -Name Windows-Defender -ComputerName $MachineName).Installed
+    $installed = (Get-WindowsFeature -Name Windows-Defender -ComputerName $MachineName).Installed
+    Write-Debug ("Machine {0} install status: {1}" -f $MachineName, $installed)
+    $installed
 }
 
 function Get-RemoteRegistryValue {
@@ -43,7 +47,7 @@ function Get-RemoteRegistryValue {
     )
 
     $r = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-ItemProperty -Path $Using:RegKeyPath -Name $Using:RegKeyName -ErrorAction SilentlyContinue }
-    Write-Debug ("Machine {0} '{1}:{2} value is {3}" -f $MachineName, $RegKeyPath, $RegKeyName, $r.$RegKeyName)
+    Write-Debug ("Machine {0} RegItem '{1}:{2}' value {3}" -f $MachineName, $RegKeyPath, $RegKeyName, $r.$RegKeyName)
     $r.$RegKeyName
 }
 
@@ -171,11 +175,8 @@ function Write-Screen {
         Write-Host ("Machine Name, OS, Needs Patches, Install Status")
         Write-Host ("{0}, {1}, {2}, {3}" -f $_.MachineName, $_.OS, $_.NeedsPatches, $_.InstallStatus)
         $_.GPOs | foreach {
-            if($_.Value -eq -1) { $value = "Not Configured" }
-            elseif($_.Value -eq $_.Disabled) { $value = "Disabled" }
-            else { $value = "Enabled" }
-
-            Write-Host ("     {0}({1}):{2}" -f $_.Label, $_.Key, $value)
+            $value = $_.Value + 1
+            Write-Host ("     {0}({1}): {2}({3})" -f $_.Label, $_.Key, $_.DisplayValues[$value], $_.Value)
         }
         Write-Host "   "
     }
@@ -207,7 +208,6 @@ $Machines | foreach {
 
     #get the OS
     $version = Get-WindowsVersion $MachineName
-    write-debug ("Machine {0} version string {1}" -f $MachineName, $version)
     $machine.OS = $version
 
     $step = .33
@@ -222,16 +222,9 @@ $Machines | foreach {
         if($null -eq $value) { 
             $value = -1
         }
-        elseif($value -eq $_.Disabled) {
-            $value = $_.Disabled
-        }
-        else {
-            $value = !($_.Disabled)
-        }
 
-        Write-Debug ("Test Machine {0} path '{1}:{2}' value {3}" -f $MachineName, $path, $key, $value)
         $gpo = $_
-        $gpo.Value = $value
+        $gpo.Value = [int]$value
         $machine.GPOs += $gpo
     }
 
@@ -239,10 +232,9 @@ $Machines | foreach {
     $percentage = ($machinePercent * $machineCount) + ($machinePercent * $step)
     Write-Progress -Activity "Reviewing Machine $MachineName" -Status "Checking for missing updates (KBs)" -PercentComplete $percentage
     if($version -like "*Server*") {
-        write-debug ("Machine {0} is a server. Performing Server MDE Checks" -f $MachineName)
+        Write-Debug ("Machine {0} is a server. Performing Server MDE Checks" -f $MachineName)
 
         $installStatus = Get-ServerMdeInstalledStatus -MachineName $MachineName
-        write-debug ("Machine {0} Defender Feature is {1}" -f $MachineName, $installStatus)
         if($installStatus -eq $true) {
             $machine.InstallStatus = "Installed"
         }
@@ -265,7 +257,6 @@ $Machines | foreach {
             $HotFixIds = $Tests.Kbs | Where-Object -Property OS -eq "Win2019" | Select-Object -ExpandProperty HotFixId
         }
 
-        Write-Debug ("Machine {0} HotFix Count: {1}" -f $MachineName, $HotFixIds.Count)
         if($HotFixIds.Count -gt 0) {
             $updates = Get-RemoteHotFix -MachineName $MachineName -Kbs $HotFixIds
             if($null -eq $updates) {
@@ -294,4 +285,3 @@ elseif($Output -eq "HTML") {
 elseif($Output -eq "Screen") {
     Write-Screen -Results $results
 }
-

@@ -68,7 +68,7 @@
                                 <div class="row pb-1">
                                     <div class="col">{{Label}}</div>
                                     <div class="col">{{Key}}</div>
-                                    <div class="col">{{Value}}</div>
+                                    <div class="col">{{ResultValue this}}</div>
                                     <div class="col d-none">
                                         <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#{{../MachineName}}_details_{{@index}}" aria-expanded="false" aria-controls="{{../MachineName}}_details_{{@index}}">
                                             More
@@ -96,6 +96,10 @@
                 machines: {0}
             };
             
+            Handlebars.registerHelper("ResultValue", function(gpoObj){
+                var index = gpoObj.Value +1;
+                return gpoObj.DisplayValues[index];
+            });
 
             var source = document.getElementById("result-template").innerHTML;
             var template = Handlebars.compile(source);

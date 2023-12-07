@@ -2,7 +2,6 @@
 =============================================================================
 
 =============================================================================
-
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true)]
@@ -10,7 +9,7 @@ param(
     [Parameter(Mandatory=$true, HelpMessage='List of machines to check for MDE readiness')]
     [string[]]$Machines,
     [Parameter(Mandatory=$true, HelpMessage='Acceptable output values: HTML, JSON, Screen')]
-    [ValidateSet("HTML","JSON","Screen")]
+    [ValidateSet("HTML","JSON","Screen","CSV")]
     [string]$Output,
     [Parameter()]
     [string]$OutputFileName = "MDEReadinessResults"
@@ -282,6 +281,9 @@ if($Output -eq "JSON") {
 elseif($Output -eq "HTML") {
     Write-Html -Results $results -OutputFileName $OutputFileName
 }
-elseif($Output -eq "Screen") {
+elseif($Output -eq "CSV") {
+    $results | Export-Csv -Path $OutputFileName -NoTypeInformation
+}
+else {
     Write-Screen -Results $results
 }

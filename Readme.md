@@ -1,6 +1,6 @@
 # MDE Scripts
 
-Please note these scripts are still being worked and improved. The best output is currently to JSON or to the screen but HTML is coming soon.
+Please note these scripts are still being worked and improved.
 
 ## Get-MdeMigrationReadyState
 
@@ -20,6 +20,7 @@ This script is intended to scan the list of machines provided to check for some 
 
 1. Run this from a machine that has Active Directory PowerShell Module installed
 1. Run this as a user who can execute Active Directory PowerShell calls (Get-ADComputer)
+1. Use HTML for user friendly output
 
 ### Running Script
 
@@ -30,7 +31,7 @@ PS> Get-MdeMigrationReadyState.ps1 -Machines FirstServer, SecondServer, ThirdSer
 **or**
 ```
 
-PS> Get-MdeMigrationReadyState.ps1 -Machines FirstServer, SecondServer, ThirdServer -Output JSON -OutputFileName SeptReadinessResult
+PS> Get-MdeMigrationReadyState.ps1 -Machines FirstServer, SecondServer, ThirdServer -Output HTML -OutputFileName SeptReadinessResult
 ```
 
 The script takes 3 parameters:

@@ -8,7 +8,7 @@
 param(
     [Parameter(Mandatory=$true, HelpMessage='List of machines to check for MDE readiness')]
     [string[]]$Machines,
-    [Parameter(Mandatory=$true, HelpMessage='Acceptable output values: HTML, JSON, Screen')]
+    [Parameter(Mandatory=$true, HelpMessage='Acceptable output values: HTML, JSON, CSV, Screen')]
     [ValidateSet("HTML","JSON","Screen","CSV")]
     [string]$Output,
     [Parameter()]
@@ -135,6 +135,24 @@ function Get-MachineTemplate {
     }
 
     $machineTemplate
+}
+
+function Write-CSV {
+    param(
+        $Results,
+        $outputFileName
+    )
+
+    #Need to flatten the object so the CSV can display the GPO fields properly
+    $Results | ForEach-Object {
+        $result = $_
+        $_.GPOs | ForEach-Object {
+            $result | Add-Member -MemberType NoteProperty -Name $_.Key -Value $_.DisplayValues[$_.Value + 1]
+        }
+    }
+
+    $file = $outputFileName + ".csv"
+    $Results | Export-Csv -Path $file -NoTypeInformation
 }
 
 function Write-Html {
@@ -282,7 +300,7 @@ elseif($Output -eq "HTML") {
     Write-Html -Results $results -OutputFileName $OutputFileName
 }
 elseif($Output -eq "CSV") {
-    $results | Export-Csv -Path $OutputFileName -NoTypeInformation
+    Write-CSV -Results $results -outputFileName $OutputFileName
 }
 else {
     Write-Screen -Results $results

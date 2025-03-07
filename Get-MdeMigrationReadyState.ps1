@@ -1,7 +1,14 @@
 <#
-=============================================================================
-
-=============================================================================
+=================================================================================================================
+ _____      _         ___  ___    _     ___  ____                 _   _            ______               _       
+|  __ \    | |        |  \/  |   | |    |  \/  (_)               | | (_)           | ___ \             | |      
+| |  \/ ___| |_ ______| .  . | __| | ___| .  . |_  __ _ _ __ __ _| |_ _  ___  _ __ | |_/ /___  __ _  __| |_   _ 
+| | __ / _ \ __|______| |\/| |/ _' |/ _ \ |\/| | |/ _' | '__/ _' | __| |/ _ \| '_ \|    // _ \/ _' |/ _' | | | |
+| |_\ \  __/ |_       | |  | | (_| |  __/ |  | | | (_| | | | (_| | |_| | (_) | | | | |\ \  __/ (_| | (_| | |_| |
+ \____/\___|\__|      \_|  |_/\__,_|\___\_|  |_/_|\__, |_|  \__,_|\__|_|\___/|_| |_\_| \_\___|\__,_|\__,_|\__, |
+                                                   __/ |                                                   __/ |
+                                                  |___/                                                   |___/
+==================================================================================================================
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true)]
@@ -65,6 +72,41 @@ function Get-RemoteHotFix {
         $update = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-HotFix -id $Using:Kbs }
     }
     $update
+}
+
+function Get-RemoteCertificates {
+    param(
+        [string]$MachineName,
+        [string]$Thumbprint
+    )
+
+    Write-Debug ("Get-RemoteCertificates")
+    try {
+        $cert = Invoke-Command -ComputerName $MachineName -ScriptBlock { Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object -Property Thumbprint -EQ $Using:Thumbprint }
+    }
+    catch {
+        Write-Error ("Get-RemoteCertificates: Error caught calling Get-ChildItem in ScriptBlock of Invoke-Command on {0}. Sending back null." -f $MachineName)
+    }
+    $cert
+}
+
+function Get-MissingRemoteValues {
+    param (
+        [string]$MachineName,
+        [string]$RegKeyPath,
+        [string]$RegKeyName,
+        [string[]]$Values
+    )
+
+    $multiValue = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath $RegKeyPath -RegKeyName $RegKeyName
+    $missingValues = @()
+    $Values | ForEach-Object {
+        if(!$multiValue.Contains($_)) {
+            $missingValues += $_
+        }
+    }
+
+    $missingValues
 }
 
 <#
@@ -188,15 +230,38 @@ function Write-Screen {
         $Results
     )
 
-    $Results | foreach {
+    $Results | ForEach-Object {
         Write-Host ("Machine Name, OS, Needs Patches, Install Status")
         Write-Host ("{0}, {1}, {2}, {3}" -f $_.MachineName, $_.OS, $_.NeedsPatches, $_.InstallStatus)
-        $_.GPOs | foreach {
+        Write-Host ("  -- GPO Checks --")
+        $_.GPOs | ForEach-Object {
             $value = $_.Value + 1
             Write-Host ("     {0}({1}): {2}({3})" -f $_.Label, $_.Key, $_.DisplayValues[$value], $_.Value)
         }
+        Write-Host (" -- Root Cert Checks --")
+        $_.Certificates | ForEach-Object {
+            Write-Host ("     Missing: {0} Available to Download {1}" -f $_.Name, $_.Link) 
+        }
+        Write-Host ("  -- Cypher Function Checks --")
+        $_.MissingCypherFunctions | ForEach-Object {
+            Write-Host ("     Missing {0} from HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Cryptography\Configuration\Local\SSL\00010002\Functions" -f $_)
+        }
         Write-Host "   "
     }
+}
+
+function Write-Banner {
+    Write-Output(
+"=================================================================================================================
+ _____      _         ___  ___    _     ___  ____                 _   _            ______               _       
+|  __ \    | |        |  \/  |   | |    |  \/  (_)               | | (_)           | ___ \             | |      
+| |  \/ ___| |_ ______| .  . | __| | ___| .  . |_  __ _ _ __ __ _| |_ _  ___  _ __ | |_/ /___  __ _  __| |_   _ 
+| | __ / _ \ __|______| |\/| |/ _' |/ _ \ |\/| | |/ _' | '__/ _' | __| |/ _ \| '_ \|    // _ \/ _' |/ _' | | | |
+| |_\ \  __/ |_       | |  | | (_| |  __/ |  | | | (_| | | | (_| | |_| | (_) | | | | |\ \  __/ (_| | (_| | |_| |
+ \____/\___|\__|      \_|  |_/\__,_|\___\_|  |_/_|\__, |_|  \__,_|\__|_|\___/|_| |_\_| \_\___|\__,_|\__,_|\__, |
+                                                   __/ |                                                   __/ |
+                                                  |___/                                                   |___/
+==================================================================================================================")
 }
 
 If ($PSBoundParameters['Debug']) {
@@ -213,7 +278,7 @@ $machinePercent = 100 / $Machines.Count
 $percentage = 0
 
 #Iterate over the list of machines
-$Machines | foreach {
+$Machines | ForEach-Object {
     $step = 0
     $MachineName = $_
 
@@ -227,11 +292,10 @@ $Machines | foreach {
     $version = Get-WindowsVersion $MachineName
     $machine.OS = $version
 
-    $step = .33
+    $step = .2
     $percentage = ($machinePercent * $machineCount) + ($machinePercent * $step)
     Write-Progress -Activity "Reviewing Machine $MachineName" -Status "Checking GPOs that disable Defender" -PercentComplete $percentage
-
-    $Tests.GPOs | foreach {
+    $Tests.GPOs | ForEach-Object {
         $path = $_.Path
         $key = $_.Key
         $value = Get-RemoteRegistryValue -MachineName $MachineName -RegKeyPath $path -RegKeyName $key
@@ -245,7 +309,31 @@ $Machines | foreach {
         $machine.GPOs += $gpo
     }
 
-    $step = .66
+    $step = .4
+    $percentage = ($machinePercent * $machineCount) + ($machinePercent * $step)
+    Write-Progress -Activity "Reviewing Machine $MachineName" -Status "Checking GPOs that disable Defender" -PercentComplete $percentage
+    $Tests.Certificates | ForEach-Object {
+        $thumbprint = $_.Thumbprint
+        $value = Get-RemoteCertificates -MachineName $MachineName -Thumbprint $thumbprint
+
+        if($null -eq $value) {
+            $machine.Certificates += $_
+        }
+    }
+
+    $step = .6
+    $percentage = ($machinePercent * $machineCount) + ($machinePercent * $step)
+    Write-Progress -Activity "Reviewing Machine $MachineName" -Status "Checking GPOs that disable Defender" -PercentComplete $percentage
+    $Tests.CrypherChecks | ForEach-Object {
+        $path = $_.Path
+        $key = $_.Key
+        $values = $_.values
+
+        $missing = Get-MissingRemoteValues -MachineName $MachineName -RegKeyPath $path -RegKeyName $key -Values $values
+        $machine.MissingCypherFunctions = $missing
+    }
+
+    $step = .8
     $percentage = ($machinePercent * $machineCount) + ($machinePercent * $step)
     Write-Progress -Activity "Reviewing Machine $MachineName" -Status "Checking for missing updates (KBs)" -PercentComplete $percentage
     if($version -like "*Server*") {

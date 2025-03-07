@@ -3,5 +3,7 @@
     "OS":"",
     "NeedsPatches":false,
     "InstallStatus":"Installed",
-    "GPOs": []
+    "GPOs": [],
+    "Certificates": [],
+    "MissingCypherFunctions": []
 }

@@ -1,4 +1,5 @@
 {
+    "Version": "1.0",
     "Kbs": 
     [
         {
@@ -12,6 +13,12 @@
             "Description":"Update for Windows Server 2016 for x64-based Systems",
             "HotFixId":"KB4589210",
             "OS":"Win2016"
+        },
+        {
+            "Date":"*",
+            "Description": "Update for Microsoft Defender for Endpoint - KB5005292 (Version *) - Current Channel (Broad)",
+            "HotFixId": "KB5005292",
+            "OS": "Win2016"
         },
         {
             "Date":"2021-09", 
@@ -53,6 +60,66 @@
             "Date":"2023-03", 
             "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
             "HotFixId":"KB5023788",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2023-09", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5030504",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2023-11", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5032391",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-02", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5034862",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-03", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5035962",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-04", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5037016",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-06", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5039334",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-07", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5040562",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-08", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5041576",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-09", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5043124",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2025-01", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5050109",
             "OS": "Win2016"
         }
     ],
@@ -129,6 +196,196 @@
             "Value": -1,
             "Disabled": 1,
             "DisplayValues":["Not Configured", "Off", "On"]
+        },
+        {
+            "note": "MAPS - source: santosh pargi collab",
+            "Label": "Join Microsoft Maps",
+            "GPO":"This value determines the level of participation in MAPS",
+            "Path":"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Spynet",
+            "Key": "SpynetReporting",
+            "Value": -1,
+            "Disabled": 0,
+            "DisplayValues":["Not Configured", "Disabled", "Basic membership", "Advanced membership"]
+        },
+        {
+            "note": "MAPS - source: santosh pargi collab",
+            "Label": "Join Microsoft Maps",
+            "GPO":"Configure local setting override for reporting to Microsoft MAPS",
+            "Path":"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Spynet",
+            "Key": "LocalSettingOverrideSpynetReporting",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "Group Policy settings take priority over local settings", "Local settings can override Group Policy settings"]
+        },
+        {
+            "note": "MAPS - source: santosh pargi collab",
+            "Label": "Microsoft MAPS",
+            "GPO":"SSL options",
+            "Path":"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Spynet",
+            "Key": "SpynetSSL",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "SSL is not used", "SSL is used"]
+        },
+        
+        {
+            "note": "Watson - source: santosh pargi collab",
+            "Label": "Configure watson events",
+            "GPO":"Configure watson events",
+            "Path":"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Reporting",
+            "Key": "DisableGenericRePorts",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "Watson events are enabled and will be sent", "Watson events are disabled and will not be sent"]
+        },
+        {
+            "note": "Removable Drives - source: santosh pargi collab",
+            "Label": "Scan removable drives",
+            "GPO":"Scan removable drives",
+            "Path":"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Scan",
+            "Key": "DisableRemovableDriveScanning",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "Removable drives will be scanned during a full scan", "Removable drives will not be scanned during a full scan"]
+        },
+        {
+            "note": "SmartScreen - source: santosh pargi collab",
+            "Label": "Windows Defender smartscreen",
+            "GPO":"Windows Defender smartscreen",
+            "Path":"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+            "Key": "EnableSmartScreen",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "Windows Defender SmartScreen is disabled", "Windows Defender SmartScreen is enabled"]
+        },
+        {
+            "note": "Network Protection - source: santosh pargi collab",
+            "Label": "Enable network protection",
+            "GPO":"Enable network protection",
+            "Path":"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Windows ",
+            "Key": "EnableNetworkProtection",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "Network protection is disabled", "Network protection is enabled", "Network protection is in audit mode"]
+        },
+        {
+            "note": "Exploit Protection - source: santosh pargi collab",
+            "Label": "Disallow Exploit Protection Override",
+            "GPO":"Disallow Exploit Protection Override",
+            "Path":"HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender Security Center\\DisallowExploitProtectionOverride",
+            "Key": "DisallowExploitProtectionOverride",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "Users are allowed to override exploit protection settings", "Users are not allowed to override exploit protection settings"]
+        },
+        {
+            "note": "Fallback Order - source: santosh pargi collab",
+            "Label": "Fallback Order",
+            "GPO":"Fallback Order",
+            "Path":"HKLM:\\Software\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+            "Key": "SetPolicyDrivenUpdateSourceForOtherUpdates",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "Defender updates will come from Microsoft Update", "Defender updates will not come from Microsoft Update"]
+        },
+        {
+            "note": "Check for Services - source: santosh pargi collab",
+            "Label": "Turn off Sense Service",
+            "GPO":"",
+            "Path":"HKLM:\\SOFTWARE\\SYSTEM\\CurrentControlSet\\Services\\Sense",
+            "Key": "Sense",
+            "Value": -1,
+            "Disabled": 4,
+            "DisplayValues":["Not Configured", "Boot", "System", "Automatic", "Manual", "Disabled"]
+        },
+        {
+            "note": "Check for Services - source: santosh pargi collab",
+            "Label": "Turn Off WdBoot",
+            "GPO":"",
+            "Path":"HKLM:\\SYSTEM\\CurrentControlSet\\Services\\WdBoot",
+            "Key": "WdBoot",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "Boot", "System", "Automatic", "Manual", "Disabled"]
+        },
+        {
+            "note": "Check for Services - source: santosh pargi collab",
+            "Label": "Turn Off WdFilter",
+            "GPO":"",
+            "Path":"HKLM:\\SYSTEM\\CurrentControlSet\\Services\\WdFilter",
+            "Key": "WdFilter",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "Boot", "System", "Automatic", "Manual", "Disabled"]
+        },
+        {
+            "note": "Check for Services - source: santosh pargi collab",
+            "Label": "Turn Off WdNisDrv",
+            "GPO":"",
+            "Path":"HKLM:\\SYSTEM\\CurrentControlSet\\Services\\WdNisDrv",
+            "Key": "WdNisDrv",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "Boot", "System", "Automatic", "Manual", "Disabled"]
+        },
+        {
+            "note": "Check for Services - source: santosh pargi collab",
+            "Label": "Turn Off WdNisSvc",
+            "GPO":"",
+            "Path":"HKLM:\\SYSTEM\\CurrentControlSet\\Services\\WdNisSvc",
+            "Key": "WdNisSvc",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "Boot", "System", "Automatic", "Manual", "Disabled"]
+        },
+        {
+            "note": "Check for Services - source: santosh pargi collab",
+            "Label": "Turn Off WinDefend",
+            "GPO":"",
+            "Path":"HKLM:\\SYSTEM\\CurrentControlSet\\Services\\windefend",
+            "Key": "windefend",
+            "Value": -1,
+            "Disabled": 1,
+            "DisplayValues":["Not Configured", "Boot", "System", "Automatic", "Manual", "Disabled"]
+        },
+
+        {
+            "note": "Check for SSL/TLS Cyphers - source: santosh pargi collab",
+            "Path":"HKLM:\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\SCHANNEL",
+            "Key": "Eventlogging",
+            "Value": -1,
+            "Disabled": 7,
+            "DisplayValues":["Not Configured", "0", "1", "2", "3", "4", "5", "6", "7"]
+        }
+    ],
+    "CrypherChecks": [
+        {
+            "Name":"Crypto Functions",
+            "Path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Cryptography\\Configuration\\Local\\SSL\\00010002",
+            "Key": "Functions",
+            "Values": [
+                "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+                "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+                "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
+                "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+                "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+                "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+                "TLS_RSA_WITH_AES_256_GCM_SHA384",
+                "TLS_RSA_WITH_AES_128_GCM_SHA256",
+                "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
+            ]
+        }
+    ],
+    "Certificates": [
+        {
+            "Name": "DigiCertGlobalRootG2.crt",
+            "Thumbprint": "df3c24f9bfd666761b268073fe06d1cc8d4f82a4",
+            "Link": "https://cacerts.digicert.com/DigiCertGlobalRootG2.crt"
+        },
+        {
+            "Name": "BaltimoreCyberTrustRoot.crt",
+            "Thumbprint":"d4de20d05e66fc53fe1a50882c78db2852cae474",
+            "Link": "https://cacerts.digicert.com/BaltimoreCyberTrustRoot.crt"
         }
     ],
     "PostDeployment":[

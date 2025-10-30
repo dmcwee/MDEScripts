@@ -263,15 +263,30 @@ $Machines | foreach {
             $machine.InstallStatus = "N/A"
 
             #Get 2012 HotFixIds
-            $HotFixIds = $Tests.Kbs | Where-Object -Property OS -eq "Win2012R2" | Select-Object -ExpandProperty HotFixId
+            if($null -ne $Tests.Kbs_v2) {
+                $HotFixIds = $Tests.Kbs_v2.Win2012R2.HotFixIds
+            }
+            else {
+                $HotFixIds = $Tests.Kbs_v2 | Where-Object -Property OS -eq "Win2012R2" | Select-Object -ExpandProperty HotFixId
+            }
         }
         elseif($version -like "*Server 2016*") {
             #Get 2016 HotFixIds
-            $HotFixIds = $Tests.Kbs | Where-Object -Property OS -eq "Win2016" | Select-Object -ExpandProperty HotFixId
+            if($null -eq $Tests.Kbs_v2) {
+                $HotFixIds = $Tests.Kbs_v2.Win2016.HotFixIds
+            }
+            else {
+                $HotFixIds = $Tests.Kbs | Where-Object -Property OS -eq "Win2016" | Select-Object -ExpandProperty HotFixId
+            }
         }
         elseif($version -like "*Server 2019*") {
             #Get 2019 HotFixIds - None used in 09/2023 but this may change in the future
-            $HotFixIds = $Tests.Kbs | Where-Object -Property OS -eq "Win2019" | Select-Object -ExpandProperty HotFixId
+            if($null -eq $Tests.Kbs_v2) {
+                $HotFixIds = $Tests.Kbs_v2.Win2019.HotFixIds
+            }
+            else {
+                $HotFixIds = $Tests.Kbs | Where-Object -Property OS -eq "Win2019" | Select-Object -ExpandProperty HotFixId
+            }
         }
 
         if($HotFixIds.Count -gt 0) {

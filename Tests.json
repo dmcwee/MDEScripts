@@ -146,6 +146,43 @@
             "OS": "Win2016"
         }
     ],
+    "Kbs_v2": {
+        "Win2012R2": {
+            "Description": "Security Update for Windows Server 2012 R2",
+            "HotFixIds": ["KB3045999"]
+        },
+        "Win2016": {
+            "Description": "Servicing Stack Updates for Windows Server 2016 for x64-based Systems",
+            "HotFixIds": [
+                "KB4589210",
+                "KB5005698",
+                "KB5011570",
+                "KB5014026",
+                "KB5016058",
+                "KB5017095",
+                "KB5017396",
+                "KB5023788",
+                "KB5034862",
+                "KB5037016",
+                "KB5039334",
+                "KB5040562",
+                "KB5041576",
+                "KB5043124",
+                "KB5050109",
+                "KB5054006",
+                "KB5055661",
+                "KB5058524",
+                "KB5060954",
+                "KB5062799",
+                "KB5065687",
+                "KB5066584"
+            ]
+        },
+        "Win2019": {
+            "Description": "Servicing Stack Updates for Windows Server 2019 for x64-based Systems",
+            "HotFixIds": []
+        }
+    },
     "GPOs":
     [
         {

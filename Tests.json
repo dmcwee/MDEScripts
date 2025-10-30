@@ -54,6 +54,96 @@
             "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
             "HotFixId":"KB5023788",
             "OS": "Win2016"
+        },
+        {
+            "Date":"2024-04", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5037016",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-09", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5043124",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-08", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5041576",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-02", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5034862",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-06", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5039334",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2025-01", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5050109",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-07", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5040562",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2024-03", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5035962",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2025-03", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5054006",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2025-04", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5055661",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2025-05", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5058524",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2025-06", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5060954",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2025-07", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5062799",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2025-09", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5065687",
+            "OS": "Win2016"
+        },
+        {
+            "Date":"2025-10", 
+            "Description":"Servicing Stack Update for Windows Server 2016 for x64-based Systems", 
+            "HotFixId":"KB5066584",
+            "OS": "Win2016"
         }
     ],
     "GPOs":
